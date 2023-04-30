@@ -1,0 +1,325 @@
+import random
+
+import pandas as pd
+from keras.losses import mean_absolute_error
+from matplotlib import pyplot as plt
+from numpy import loadtxt
+import numpy as np
+import tensorflow as tf
+from keras.models import Sequential
+from keras.layers import Dense, BatchNormalization
+from sklearn.model_selection import train_test_split
+import numpy
+
+good_houses = ["000.021.184.023", "000.021.252.071", "000.021.217.122", "000.021.175.156", "000.046.195.015",
+               "000.021.229.231", "000.022.005.033", "000.022.001.092", "000.022.003.102", "000.022.013.205",
+               "000.021.219.099", "000.021.211.094", "000.021.226.174", "000.021.191.008", "000.021.193.234",
+               "000.021.201.094", "000.021.230.247", "000.021.216.100", "000.021.160.006", "000.021.162.108",
+               "000.046.192.109"]
+
+seed = 10
+numpy.random.seed(seed)
+
+# house = "000.021.218.136" # Loss:74 Training, 140 Testing
+# house = "000.021.205.083" # Loss:76 Training, 74 Testing
+# house = "000.021.174.106" # Loss:39 Training, 43 Testing
+# house = "000.021.159.213" # Loss:45 Training, 53 Testing
+# house = "000.021.160.139" # Loss:155 Training, 273 Testing
+# house = "000.021.157.133" # Loss:67 Training, 64 Testing
+# house = "000.021.157.133" # Loss:131 Training, 159 Testing
+# house = "000.021.161.206" # Loss:116 Training, 160 Testing
+# house = "000.021.197.073" # Loss:450 Training, 400 Testing
+
+# house = "000.021.242.203"
+# house = '000.021.205.083'
+# house = '000.021.196.129'
+# house = "000.022.013.205"
+house_BEST = "000.021.159.213"
+
+house = good_houses[0]
+
+# house_test = "2019_000.021.218.136"
+
+
+# load the dataset
+# dataset = loadtxt("Radon dataset/joined_homes/" + house + ".csv", delimiter=',', skiprows=1)
+
+
+# dataset = loadtxt("../mixed_homes/winter.csv", delimiter=',', skiprows=1)
+
+# index = 0
+# for row in dataset:
+#     if int(row[0])==2020:
+#         break
+#     index +=1
+# print(index)
+
+def read_dataset(name):
+    df = pd.read_csv(name)
+    dataset = np.array(df)
+    # np.random.shuffle(dataset)
+    target = dataset[:, [5]]
+    variables = dataset[:, [0, 1, 2, 3, 4, 6, 7, 8]]
+    year = dataset[:, [0]]
+    print(target)
+    print(variables)
+    return target, variables, year
+
+
+# y, X, uids = read_dataset("/Users/anastasiasusciuc/Desktop/Research/Radon/Radon
+# dataset/joined_homes/000.021.156.123.csv")
+# y, X, year = read_dataset("./Radon dataset/joined_homes_log/" + house_BEST + ".csv")
+y, X, year = read_dataset()
+
+X_train = []
+y_train = []
+X_test = []
+y_test = []
+for i in range(len(X)):
+    row = X[i]
+    if row[0] == 2019:
+        X_train.append(row)
+        y_train.append(y[i][0])
+    elif row[0] == 2020:
+        X_test.append(row)
+        y_test.append(y[i][0])
+X_train = np.array(X_train)
+y_train = np.array(y_train)
+X_test = np.array(X_test)
+y_test = np.array(y_test)
+
+
+# def read_dataset(name):
+#     df = pd.read_csv(name)
+#     dataset = np.array(df)
+#     dataset = dataset[dataset[:, 6].astype(int) <= 1000]
+#     dataset = dataset[dataset[:, 6].astype(int) >= 10]
+#     # dataset = dataset[dataset[:, 0] == house]
+#     np.random.shuffle(dataset)
+#     target = dataset[:, [5]]
+#     variables = dataset[:, [1, 2, 3, 4, 6, 7]]
+#     # uids = list(dataset[:, 0])
+#     print(target)
+#     print(variables)
+#     return target, variables, list(set(uids))
+#
+#
+# # y, X, uids = read_dataset("../mixed_homes/all.csv")
+# y, X, uids = read_dataset(house[0])
+# year_train = 2019
+# year_test = 2020
+# X_train = [val[1:] for val in X if val[0] == year_train]
+# y_train = [val[1] for val in y if val[0] == year_train]
+# X_test = [val[1:] for val in X if val[0] == year_test]
+# y_test = [val[1] for val in y if val[0] == year_test]
+# X = [val[1:] for val in X]
+# y = [val[1] for val in y]
+#
+# X_train = [[float(x) for x in arr] for arr in X_train]
+# y_train = [int(x) for x in y_train]
+# X_test = [[float(x) for x in arr] for arr in X_test]
+# y_test = [int(x) for x in y_test]
+# X = [[float(x) for x in arr] for arr in X]
+# y = [int(x) for x in y]
+
+# test_uids = list(random.sample(uids, int(len(uids) * 0.33)))
+# # print(len(uids), len(test_uids))
+# train_uids = list(set(uids) - set(test_uids))
+# # print(train_uids)
+#
+# X_train = [val[1:] for val in X if val[0] in train_uids]
+# y_train = [val[1] for val in y if val[0] in train_uids]
+# X_test = [val[1:] for val in X if val[0] in test_uids]
+# y_test = [val[1] for val in y if val[0] in test_uids]
+# X = [val[1:] for val in X]
+# y = [val[1] for val in y]
+
+# X = [[float(x) for x in arr] for arr in X]
+# y = [int(x) for x in y]
+
+# X_test = [[float(x) for x in arr] for arr in X_test]
+# y_test = [int(x) for x in y_test]
+# X = [[float(x) for x in arr] for arr in X]
+# y = [int(x) for x in y]
+
+
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, shuffle=True, random_state=seed)
+
+model = Sequential()
+
+model.add(BatchNormalization())
+# model.add(Dense(50, input_dim=5, activation='sigmoid'))
+# model.add(BatchNormalization())
+# model.add(tf.keras.layers.Dropout(0.4))
+# model.add(Dense(40, activation='relu'))
+# model.add(BatchNormalization())
+model.add(Dense(30, activation='relu'))
+# model.add(tf.keras.layers.Dropout(0.4))
+model.add(BatchNormalization())
+model.add(Dense(20, activation='relu'))
+# model.add(tf.keras.layers.Dropout(0.4))
+model.add(BatchNormalization())
+model.add(Dense(15, activation='relu'))
+# model.add(tf.keras.layers.Dropout(0.4))
+model.add(BatchNormalization())
+model.add(Dense(10, activation='relu'))
+# model.add(tf.keras.layers.Dropout(0.4))
+model.add(BatchNormalization())
+model.add(Dense(1, activation='relu'))
+
+# compile the keras model
+# model.compile(optimizer='adam',loss='mean_absolute_percentage_error', metrics=["mean_absolute_percentage_error"])
+model.compile(optimizer='adam', loss='mean_absolute_percentage_error', metrics=["mae"])
+# model.compile(optimizer='adam', loss='mean_squared_error', metrics=["mae"])
+
+# evaluate the keras model
+hist = model.fit(X_train, y_train,
+                 batch_size=100,
+                 epochs=30,
+                 verbose=2,
+                 validation_data=(X_test, y_test)
+                 )
+
+
+i = 0
+correct = 0
+mean = 0
+losses = []
+
+predictions = model.predict(X_test)
+for initial_value in y_test:
+    if abs(initial_value - predictions[i]) < 50 and not (250 <= initial_value <= 350):
+        correct += 1
+    elif 250 <= initial_value <= 350 and abs(initial_value - predictions[i]) < 25:
+        correct += 1
+    i += 1
+    losses.append(100 * abs((initial_value - predictions[i - 1]) / initial_value))
+
+mean /= len(y_test)
+print("Accuracy model is ", correct * 100 / i, "% with MAE of ",
+      mean_absolute_error(y_test, predictions))
+
+def diagonal_plot(prediction_values, target_values, train_target_values, train_prediction_values, name="DNN"):
+    plt.plot(target_values, prediction_values, 'or', markersize=2)
+    plt.plot(train_target_values, train_prediction_values, 'ob', markersize=2)
+    plt.axline((0, 0), (10, 10), color='red')
+    plt.xlabel('target')
+    plt.ylabel('prediction')
+    plt.title(name)
+    plt.show()
+
+
+predict_values = model.predict(X_test)
+train_target_values = model.predict(X_train)
+diagonal_plot(predict_values, y_test, y_train, train_target_values)
+
+# i=0
+# sum=0
+# accuracy=0
+# distances = []
+#
+# print("\n\n\n----------------- TESTING VALUES AND PREDICTIONS ----------------- : \n\n")
+# tf.keras.utils.plot_model(model, to_file="results.png", show_shapes=True)
+#
+# sum_testing = sum
+# i_testing = i
+# accuracy_testing = accuracy
+#
+# import matplotlib.pyplot as plt
+#
+# x_plot = [x[0] for x in distances]
+# y_plot = [x[1] for x in distances]
+#
+# plt.plot(x_plot,y_plot, 'or', markersize=2)
+#
+#
+# testing_values_on_data = model.predict(x_2019)
+#
+#
+# # print("\n\n\n----------------- TRAINING DATA VALUES AND PREDICTIONS ----------------- : \n\n")
+#
+# i=0
+# sum=0
+# distances = []
+# accuracy=0
+# for predict in testing_values_on_data:
+#     # sum = sum + abs(predict - y_2019[i])
+#     # distances.append((i, abs(predict-y_2019[i])))
+#     loss = 100 * abs((y_2019[i] - predict) / y_2019[i])
+#     sum = sum + loss
+#     distances.append((i, loss))
+#     if loss == 100:
+#         print("LOSS:", y_2019[i], " predict ", predict)
+#     if abs(predict - y_2019[i]) < 30:
+#         accuracy += 1
+#     # print(i, "Actual: ", y[i], " Predict: ", predict, " Loss: ", abs(predict - y[i]))
+#     i+=1
+#
+#
+# print("\nAverage loss on testing data: ", sum_testing/i_testing)
+# print("Accuracy on testing data: ", accuracy_testing/i_testing*100,"%")
+# print("\nAverage loss on training data: ", sum/i)
+# print("Accuracy on training data: ", accuracy/i*100,"%")
+#
+#
+# import matplotlib.pyplot as plt
+#
+# x_plot = [x[0] for x in distances]
+# y_plot = [x[1] for x in distances]
+#
+# plt.plot(x_plot,y_plot, 'ob', markersize=2)
+# plt.ylabel("Loss = 100 * |predict - target| / target")
+# plt.title(" Average loss - Percentages - "+house)
+# # plt.axis([0,len(X),0,100])
+# plt.show()
+
+
+#
+# # print(model.summary())
+#
+#
+# plt.plot(hist.history['loss'])
+# plt.plot(hist.history['val_loss'])
+# plt.title('Model Loss')
+# plt.ylabel('loss')
+# plt.xlabel('epoch')
+# plt.legend(['train', 'val'], loc='upper left')
+# plt.show()
+#
+# import visualkeras
+#
+#
+# # visualkeras.layered_view(model).show() # display using your system viewer
+# # from keras.utils.vis_utils import plot_model
+# #
+# # plot_model(model, to_file='model_plot.png', show_shapes=True, show_layer_names=True)
+#
+# from keras import backend as K
+# def coeff_determination(y_true, y_pred):
+#     SS_res =  K.sum(K.square( y_true-y_pred ))
+#     SS_tot = K.sum(K.square( y_true - K.mean(y_true) ) )
+#     return ( 1 - SS_res/(SS_tot + K.epsilon()) )
+#
+#
+# #
+# # testing_values = model.predict(x_val)
+# # r2 = coeff_determination(testing_values, y_val)
+# # print("R2 score: ", r2)
+# def diagonal_plot(prediction_values, target_values, train_target_values, train_prediction_values, name=""):
+#     plt.plot(target_values, prediction_values, 'or')
+#     plt.plot(train_target_values, train_prediction_values, 'ob')
+#     plt.axline((0, 0), (10, 10), color='red')
+#     plt.xlabel('target')
+#     plt.ylabel('prediction')
+#     plt.title(name)
+#     plt.show()
+#
+# testing_val = model.predict(x_2020)
+# training_val = model.predict(x_2019)
+#
+# diagonal_plot(testing_val
+#               , y_val, training_val, y)
+#
+#
+# from sklearn.metrics import mean_absolute_error, r2_score
+# print("R2 score:", r2_score(y_val, model.predict(x_2020)))
