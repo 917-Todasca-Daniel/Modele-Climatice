@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from constants import PATH_TO_DATASET
+from utils.constants import PATH_TO_DATASET
 
 MAX_NUMBER_OF_HOUSES = 10
 FIRST_NUMBER_OF_MEASUREMENTS = 10
