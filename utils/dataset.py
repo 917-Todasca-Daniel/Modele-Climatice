@@ -5,7 +5,7 @@ import random
 seed = 10
 np.random.seed(seed)
 
-def read_dataset(name, log=False):
+def read_dataset(name, log=True):
     name = "./Radon dataset/joined_homes" + ('_log' if log else '') + '/' + name + ".csv"
     df = pd.read_csv(name)
     dataset = np.array(df)
@@ -43,7 +43,7 @@ def split_dataset(X, y, year):
     return X_train, X_test, y_train, y_test
 
 
-def get_full_dataset(house_names, log=False):
+def get_houses_split_dataset(house_names, log=True):
     X_train, X_test, y_train, y_test = [], [], [], [] # np.array([]), np.array([]), np.array([]), np.array([])
     for house_name in house_names:
         X_train_curr, X_test_curr, y_train_curr, y_test_curr = \
@@ -66,4 +66,7 @@ def get_full_dataset(house_names, log=False):
         else:
             np.concatenate((y_test, y_test_curr), axis=0)
     return X_train, X_test, y_train, y_test
+
+def get_house_split_dataset(house_name, log=True):
+    return get_houses_split_dataset([house_name], log)
 
