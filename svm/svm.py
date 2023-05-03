@@ -1,13 +1,15 @@
 import numpy as np
 import numpy
 
+import pandas as pd
+
 from sklearn.svm import SVR
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, MaxAbsScaler
 
-from constants import PATH_TO_DATASET
+from constants import PATH_TO_DATASET, GOOD_HOUSES
 
 import matplotlib.pyplot as plt
 
@@ -22,31 +24,32 @@ def get_accuracy(target_y, predict_y):
     i = 0
     accuracy = 0
     for predict in predict_y:
-        if abs(predict - target_y[i]) < 5:
+        if abs(predict - target_y[i]) < 50 and not (250 <= target_y[i] <= 350):
+            accuracy += 1
+        elif 250 <= target_y[i] <= 350 and abs(target_y[i] - predict) < 25:
             accuracy += 1
         i += 1
     return accuracy / i * 100
 
 
 def read_dataset(name):
-    dataset = np.loadtxt(name, delimiter=',', skiprows=1)
-    target = dataset[:, 5]
+    df = pd.read_csv(name)
+    dataset = np.array(df)
+    target = dataset[:, [5]]
     variables = dataset[:, [0, 1, 2, 3, 4, 6, 7, 8]]
-    for percentage in target:
-        if percentage < 0 or percentage > 100:
-            print("opa", percentage)
-    return target, variables
+    uids = list(dataset[:, 0])
+    return target, variables, list(set(uids))
 
 
 def poly_kernel():
     return make_pipeline(
-        MaxAbsScaler(),
+        StandardScaler(),
         SVR(
             kernel='poly',
-            degree=5,
-            gamma='scale',
-            coef0=0.5,
-            C=5,
+            degree=3,
+            gamma='auto',
+            coef0=1.0,
+            C=1,
             cache_size=cache_size,
             verbose=verbose
         )
@@ -72,25 +75,36 @@ def sigmoid_kernel():
         SVR(
             kernel='sigmoid',
             gamma='scale',
-            coef0=0.005,
-            C=0.3,
+            coef0=1.0,
+            C=1.0,
             cache_size=cache_size,
             verbose=verbose
         )
     )
 
 
-uid = "000.021.157.133"
-path_to_dataset = PATH_TO_DATASET + 'joined_homes_log/' + uid + ".csv"
-y, X = read_dataset(path_to_dataset)
-print(type(y))
-print(type(X))
-print(y)
-print(X)
-print(y[0])
-print(X[0])
-exit(0)
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.33, shuffle=True, random_state=seed)
+uid = GOOD_HOUSES[0]
+print(uid)
+path_to_dataset = PATH_TO_DATASET + 'joined_homes/' + uid + ".csv"
+y, X, _ = read_dataset(path_to_dataset)
+
+X_train = []
+y_train = []
+X_test = []
+y_test = []
+X_cross = []
+y_cross = []
+for i in range(len(X)):
+    row = X[i]
+    if row[0] == 2019:
+        X_train.append(row)
+        y_train.append(y[i][0])
+    elif row[0] == 2020:
+        X_test.append(row)
+        y_test.append(y[i][0])
+    elif row[0] == 2021:
+        X_cross.append(row)
+        y_cross.append(y[i][0])
 
 if __name__ == "__main__":
     model = sigmoid_kernel()
